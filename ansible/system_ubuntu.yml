@@ -4,6 +4,7 @@
 # - keepass config
 # - mx master keys not working (not ansible problem)
 # - VS Code plugins (linters, formatters, etc.)
+# - read encrypted .ssh files
 
 - name: SYSTEM
   hosts: localhost
@@ -17,6 +18,7 @@
       - dconf-editor
       - vim
       - tmux
+      - htop
       - git
       - python-pip
       - awscli
