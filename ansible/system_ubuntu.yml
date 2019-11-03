@@ -1,0 +1,194 @@
+---
+# TODO:
+# - firefox plugins (Kee, Authenticator)
+# - keepass config
+# - mx master keys not working (not ansible problem)
+# - VS Code plugins (linters, formatters, etc.)
+
+- name: SYSTEM
+  hosts: localhost
+
+  vars:
+    # SYSTEM
+    download_path: "/home/{{ ansible_user_id }}/Downloads"
+    lf_dir_path: "/home/{{ ansible_user_id }}/lotusflare"
+
+    packages:
+      - dconf-editor
+      - vim
+      - tmux
+      - git
+      - python-pip
+      - awscli
+      - docker
+      - openvpn
+      - software-properties-common
+      - apt-transport-https
+      - keepass2
+      - mono-complete # for keepass plugins
+      - xbindkeys
+
+    # USER
+    ipa_username: djordje_simic
+    rootfs: "/home/dlz/Downloads/1/rootfs"
+    aliases:
+      - "alias vpnlf='sudo openvpn /etc/openvpn/client/lotusflare/lotusflare-{{ ipa_username }}.ovpn'"
+      - "alias cm='cd /home/{{ ansible_user_id }}/lotusflare/cm'"
+
+  tasks:
+    - name: apt-get update
+      apt:
+        update_cache: yes
+      become: yes
+      when: update_cache | default(false)
+
+    - name: Install packages
+      apt:
+        name: "{{ item  }}"
+        state: present
+      with_items: "{{ packages }}"
+      become: yes
+      tags:
+        - apps
+
+    - name: Create directories
+      file:
+        path: "{{ item }}"
+        state: directory
+      with_items:
+        - "{{ download_path }}"
+        - "{{ lf_dir_path }}"
+
+    - name: Install Visual Studio Code
+      block:
+        - name: Import Microsoft GPG key
+          apt_key:
+            url: https://packages.microsoft.com/keys/microsoft.asc
+            state: present
+          become: yes
+
+        - name: Add Microsoft repository
+          apt_repository:
+            repo: deb [arch=amd64] https://packages.microsoft.com/repos/vscode stable main
+            state: present
+          become: yes
+
+        - name: Install Visual Studio Code
+          apt:
+            name: code
+            update_cache: yes
+          become: yes
+      tags:
+        - custom_repo
+
+    - name: Install Slack
+      block:
+        - name: Download Slack
+          get_url:
+            url: https://downloads.slack-edge.com/linux_releases/slack-desktop-4.1.1-amd64.deb
+            dest: "{{ download_path }}"
+
+        - name: Install Slack
+          apt:
+            deb: "{{ download_path }}/slack-desktop-4.1.1-amd64.deb"
+          become: yes
+      tags:
+        - custom_repo
+
+    - name: Setup KeePass plugins
+      block:
+        - name: Get KeePassRPC plugin
+          get_url:
+            url: https://github.com/kee-org/keepassrpc/releases/download/v1.9.0/KeePassRPC.plgx
+            dest: "{{ download_path }}/KeePassRPC.plgx"
+
+        - name: Copy plugin to KeePass dir
+          copy:
+            src: "{{ download_path }}/KeePassRPC.plgx"
+            dest: "/usr/lib/keepass2/Plugins/"
+          become: yes
+      tags:
+        - apps
+        - keepass
+
+    - name: Install PIP packages
+      pip:
+        name: "{{ item  }}"
+        state: present
+      with_items:
+        - psutil # for dconf
+      tags:
+        - dconf
+
+    - name: Configure dconf
+      block:      
+        - name: Disable default Alt-Tab behaviour
+          dconf:
+            key: "/org/gnome/desktop/wm/keybindings/switch-applications"
+            value: "['<Alt>1']" # tmp workaround, needs to be disabled
+            state: present
+
+        - name: Configure Alt-Tab behaviour
+          dconf:
+            key: "/org/gnome/desktop/wm/keybindings/switch-windows"
+            value: "['<Alt>Tab']"
+            state: present
+        - name: Configure Alt-Tab behaviour
+          dconf:
+            key: "/org/gnome/settings-daemon/plugins/color/night-light-temperature"
+            value: uint32 4500
+            state: present
+      tags:
+        - dconf
+
+    - name: Copy user configurations
+      copy:
+        src: "{{ rootfs }}/home/{{ ipa_username }}/"
+        dest: "/home/{{ ansible_user_id }}"
+      notify:
+        - reload xbindkeys
+      tags:
+        - apps
+        - files
+
+    - name: Set .ssh permissions
+      file:
+        path: "/home/{{ ansible_user_id }}/.ssh/{{ item }}"
+        mode: "600"
+      with_items:
+        - id_rsa
+        - id_rsa.pub
+        - jenkins_master_ec2.pem
+      tags:
+        - perms
+
+    - name: Copy openvpn config
+      copy:
+        src: "{{ rootfs }}/etc/openvpn"
+        dest: /etc
+      become: yes
+
+    - name: Add aliases to .bashrc
+      lineinfile:
+        path: "/home/{{ ansible_user_id }}/.bashrc"
+        line: "{{ item }}"
+      with_items: "{{ aliases }}"
+        
+      tags:
+        - alias
+
+    - name: Fetch CM repo
+      git:
+        repo: git@github.com:lotusflare/cm.git
+        dest: "{{ lf_dir_path }}/cm"
+      tags:
+        - git
+
+  handlers:
+    - name: source .bashrc
+      sudo: no
+      shell: ". /home/{{ ansible_user_id }}/.bashrc"
+
+    - name: reload xbindkeys
+      sudo: no
+      shell: "xbindkeys --poll-rc"
