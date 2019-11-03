@@ -173,7 +173,6 @@
         path: "/home/{{ ansible_user_id }}/.bashrc"
         line: "{{ item }}"
       with_items: "{{ aliases }}"
-        
       tags:
         - alias
 
