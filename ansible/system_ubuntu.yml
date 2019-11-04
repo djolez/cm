@@ -29,6 +29,7 @@
       - keepass2
       - mono-complete # for keepass plugins
       - xbindkeys
+      - chromium-browser
 
     # USER
     ipa_username: djordje_simic
@@ -135,7 +136,14 @@
             key: "/org/gnome/desktop/wm/keybindings/switch-windows"
             value: "['<Alt>Tab']"
             state: present
-        - name: Configure Alt-Tab behaviour
+
+        - name: Enable Night Light
+          dconf:
+            key: /org/gnome/settings-daemon/plugins/color/night-light-enabled
+            value: true
+            state: present
+        
+        - name: Set Night Light Temperature
           dconf:
             key: "/org/gnome/settings-daemon/plugins/color/night-light-temperature"
             value: uint32 4500
