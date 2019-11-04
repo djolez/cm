@@ -1,0 +1,70 @@
+---
+- name: Install packages
+  apt:
+    name: "{{ item  }}"
+    state: present
+  with_items:
+    - xbindkeys
+  become: yes
+  tags:
+    - apps
+
+- name: Install Visual Studio Code
+  block:
+    - name: Import Microsoft GPG key
+      apt_key:
+        url: https://packages.microsoft.com/keys/microsoft.asc
+        state: present
+      become: yes
+
+    - name: Add Microsoft repository
+      apt_repository:
+        repo: deb [arch=amd64] https://packages.microsoft.com/repos/vscode stable main
+        state: present
+      become: yes
+
+    - name: Install Visual Studio Code
+      apt:
+        name: code
+        update_cache: yes
+      become: yes
+  when: install_custom_repos | default(false)
+  tags:
+    - custom_repo
+
+- name: Configure dconf
+  block:
+    - name: Install PIP packages
+      pip:
+        name: psutil
+        state: present
+
+    - name: Disable default Alt-Tab behaviour
+      dconf:
+        key: "/org/gnome/desktop/wm/keybindings/switch-applications"
+        value: "['<Alt>1']" # tmp workaround, needs to be disabled
+        state: present
+
+    - name: Configure Alt-Tab behaviour
+      dconf:
+        key: "/org/gnome/desktop/wm/keybindings/switch-windows"
+        value: "['<Alt>Tab']"
+        state: present
+
+    - name: Enable Night Light
+      dconf:
+        key: "/org/gnome/settings-daemon/plugins/color/night-light-enabled"
+        value: "true"
+        state: present
+    
+    - name: Set Night Light Temperature
+      dconf:
+        key: "/org/gnome/settings-daemon/plugins/color/night-light-temperature"
+        value: uint32 4500
+        state: present
+  tags:
+    - dconf
+
+- name: trigger reload xbindkeys
+  command: /bin/true
+  notify: reload xbindkeys

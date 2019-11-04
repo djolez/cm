@@ -28,7 +28,6 @@
       - apt-transport-https
       - keepass2
       - mono-complete # for keepass plugins
-      - xbindkeys
       - chromium-browser
 
     # USER
@@ -62,28 +61,6 @@
         - "{{ download_path }}"
         - "{{ lf_dir_path }}"
 
-    - name: Install Visual Studio Code
-      block:
-        - name: Import Microsoft GPG key
-          apt_key:
-            url: https://packages.microsoft.com/keys/microsoft.asc
-            state: present
-          become: yes
-
-        - name: Add Microsoft repository
-          apt_repository:
-            repo: deb [arch=amd64] https://packages.microsoft.com/repos/vscode stable main
-            state: present
-          become: yes
-
-        - name: Install Visual Studio Code
-          apt:
-            name: code
-            update_cache: yes
-          become: yes
-      tags:
-        - custom_repo
-
     - name: Install Slack
       block:
         - name: Download Slack
@@ -95,6 +72,7 @@
           apt:
             deb: "{{ download_path }}/slack-desktop-4.1.1-amd64.deb"
           become: yes
+      when: install_custom_repos | default(false)
       tags:
         - custom_repo
 
@@ -114,49 +92,10 @@
         - apps
         - keepass
 
-    - name: Install PIP packages
-      pip:
-        name: "{{ item  }}"
-        state: present
-      with_items:
-        - psutil # for dconf
-      tags:
-        - dconf
-
-    - name: Configure dconf
-      block:      
-        - name: Disable default Alt-Tab behaviour
-          dconf:
-            key: "/org/gnome/desktop/wm/keybindings/switch-applications"
-            value: "['<Alt>1']" # tmp workaround, needs to be disabled
-            state: present
-
-        - name: Configure Alt-Tab behaviour
-          dconf:
-            key: "/org/gnome/desktop/wm/keybindings/switch-windows"
-            value: "['<Alt>Tab']"
-            state: present
-
-        - name: Enable Night Light
-          dconf:
-            key: /org/gnome/settings-daemon/plugins/color/night-light-enabled
-            value: true
-            state: present
-        
-        - name: Set Night Light Temperature
-          dconf:
-            key: "/org/gnome/settings-daemon/plugins/color/night-light-temperature"
-            value: uint32 4500
-            state: present
-      tags:
-        - dconf
-
     - name: Copy user configurations
       copy:
         src: "{{ rootfs }}/home/{{ ipa_username }}/"
         dest: "/home/{{ ansible_user_id }}"
-      notify:
-        - reload xbindkeys
       tags:
         - apps
         - files
@@ -193,11 +132,8 @@
       tags:
         - git
 
-  handlers:
-    - name: source .bashrc
-      sudo: no
-      shell: ". /home/{{ ansible_user_id }}/.bashrc"
-
-    - name: reload xbindkeys
-      sudo: no
-      shell: "xbindkeys --poll-rc"
+    - name: Run User defined tasks
+      include_role:
+        name: user
+      tags:
+        - user

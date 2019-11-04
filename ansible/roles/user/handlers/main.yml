@@ -1,0 +1,5 @@
+---
+- name: reload xbindkeys
+  sudo: no
+  shell: "xbindkeys --poll-rc"
+  
