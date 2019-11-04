@@ -5,6 +5,7 @@
 # - mx master keys not working (not ansible problem)
 # - VS Code plugins (linters, formatters, etc.)
 # - read encrypted .ssh files
+# - autostart apps https://askubuntu.com/a/48327
 
 - name: SYSTEM
   hosts: localhost
