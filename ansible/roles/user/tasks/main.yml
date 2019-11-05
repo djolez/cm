@@ -4,6 +4,7 @@
     name: "{{ item  }}"
     state: present
   with_items:
+    - gnome-tweak-tool # to disable animations
     - xbindkeys
   become: yes
   tags:
@@ -68,3 +69,5 @@
 - name: trigger reload xbindkeys
   command: /bin/true
   notify: reload xbindkeys
+  tags:
+    - apps

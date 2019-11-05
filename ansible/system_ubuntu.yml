@@ -1,9 +1,10 @@
 ---
 # TODO:
 # - firefox plugins (Kee, Authenticator)
-# - keepass config
-# - mx master keys not working (not ansible problem)
 # - VS Code plugins (linters, formatters, etc.)
+# - keepass config
+# - ^^ backup and restore all settings https://askubuntu.com/a/9889
+# - mx master keys not working (not ansible problem)
 # - read encrypted .ssh files
 # - autostart apps https://askubuntu.com/a/48327
 
