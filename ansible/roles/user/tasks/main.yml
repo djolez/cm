@@ -1,4 +1,6 @@
 ---
+# To set Firefox default zoom: https://bugzilla.mozilla.org/show_bug.cgi?id=332275#c52
+# (first enable console --> devtools.chrome.enabled preference to true in about:config)
 - name: Install packages
   apt:
     name: "{{ item  }}"
@@ -6,7 +8,7 @@
   with_items:
     - gnome-tweak-tool # to disable animations
     - xbindkeys
-    - ffmpeg # youtube doesn't work on miniman Ubuntu
+    - ffmpeg # youtube doesn't work on minimal Ubuntu
   become: yes
   tags:
     - apps
