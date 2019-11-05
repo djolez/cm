@@ -6,6 +6,7 @@
   with_items:
     - gnome-tweak-tool # to disable animations
     - xbindkeys
+    - ffmpeg # youtube doesn't work on miniman Ubuntu
   become: yes
   tags:
     - apps
