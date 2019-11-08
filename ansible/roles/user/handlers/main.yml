@@ -2,4 +2,7 @@
 - name: reload xbindkeys
   sudo: no
   shell: "xbindkeys --poll-rc"
-  
+
+- name: source .bashrc
+  sudo: no
+  shell: ". /home/dlz/.bashrc"

@@ -9,6 +9,7 @@
     - gnome-tweak-tool # to disable animations
     - xbindkeys
     - ffmpeg # youtube doesn't work on minimal Ubuntu
+    - ktorrent
   become: yes
   tags:
     - apps
@@ -60,7 +61,7 @@
         key: "/org/gnome/settings-daemon/plugins/color/night-light-enabled"
         value: "true"
         state: present
-    
+
     - name: Set Night Light Temperature
       dconf:
         key: "/org/gnome/settings-daemon/plugins/color/night-light-temperature"
@@ -68,6 +69,16 @@
         state: present
   tags:
     - dconf
+
+- name: Add aliases to .bashrc
+  lineinfile:
+    path: "/home/{{ ansible_user_id }}/.bashrc"
+    line: "{{ item }}"
+  with_items: "{{ user_aliases }}"
+  # not working
+  # notify: source .bashrc
+  tags:
+    - alias
 
 - name: trigger reload xbindkeys
   command: /bin/true

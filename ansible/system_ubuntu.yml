@@ -24,7 +24,7 @@
       - git
       - python-pip
       - awscli
-      - docker
+      - docker.io
       - openvpn
       - software-properties-common
       - apt-transport-https
