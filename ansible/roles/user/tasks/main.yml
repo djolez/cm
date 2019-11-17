@@ -10,6 +10,7 @@
     - xbindkeys
     - ffmpeg # youtube doesn't work on minimal Ubuntu
     - ktorrent
+    - libreoffice
   become: yes
   tags:
     - apps
